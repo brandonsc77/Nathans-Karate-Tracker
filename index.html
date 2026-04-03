@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0f">
+  <title>Karate Tracker Template</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <style>
+    :root {
+      --bg: #090a0f;
+      --panel: #12141c;
+      --panel-2: #171a24;
+      --line: rgba(255,255,255,.08);
+      --text: #f7f8fb;
+      --muted: #adb3c2;
+      --accent: #ef3a3a;
+      --success: #1ec27a;
+      --warn: #f7b500;
+      --danger: #f35d5d;
+      --shadow: 0 18px 50px rgba(0,0,0,.38);
+      --radius: 22px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: radial-gradient(circle at top, #171b27 0%, var(--bg) 35%, #05060a 100%); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif; min-height: 100%; }
+    body { padding: max(18px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom)); }
+    .app { width: 100%; max-width: 720px; margin: 0 auto; }
+    .hero {
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      border: 10px solid rgba(239,58,58,.9);
+      border-radius: 50%;
+      top: -110px;
+      right: -70px;
+      opacity: .18;
+      pointer-events: none;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(239,58,58,.35);
+      color: #ffd7d7;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      background: rgba(239,58,58,.08);
+    }
+    h1 { font-size: 30px; line-height: 1.05; margin: 14px 0 8px; }
+    .sub { color: var(--muted); font-size: 15px; line-height: 1.45; max-width: 560px; }
+    .grid { display: grid; gap: 14px; margin-top: 16px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .kpi { font-size: 30px; font-weight: 700; margin-top: 8px; }
+    .label { color: var(--muted); font-size: 13px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .row.between { justify-content: space-between; align-items: center; }
+    .belt-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--line);
+    }
+    .swatch {
+      width: 18px; height: 18px; border-radius: 999px; border: 2px solid rgba(255,255,255,.6);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.28);
+      flex: 0 0 auto;
+    }
+    button, select, input {
+      font: inherit;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+    }
+    input, select { width: 100%; padding: 14px 14px; outline: none; }
+    button {
+      padding: 13px 16px;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .12s ease, border-color .12s ease;
+    }
+    button:active { transform: scale(.98); }
+    button.primary { background: var(--accent); border-color: transparent; color: white; font-weight: 700; }
+    button.secondary { background: #1b1f2a; }
+    button.success { background: rgba(30,194,122,.14); border-color: rgba(30,194,122,.28); color: #bcf5db; }
+    button.warn { background: rgba(247,181,0,.14); border-color: rgba(247,181,0,.28); color: #ffe8a0; }
+    button.danger { background: rgba(243,93,93,.14); border-color: rgba(243,93,93,.28); color: #ffcaca; }
+    .section-title { font-size: 18px; font-weight: 700; margin: 2px 0 14px; }
+    .muted { color: var(--muted); }
+    .progress-wrap { margin-top: 10px; }
+    .progress-bar {
+      height: 14px;
+      background: rgba(255,255,255,.06);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #ff6b6b, #ef3a3a);
+      border-radius: inherit;
+      transition: width .3s ease;
+    }
+    .stack { display: grid; gap: 10px; }
+    .attendance-list { display: grid; gap: 10px; margin-top: 12px; }
+    .attendance-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.025);
+    }
+    .status-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 5px rgba(30,194,122,.12);
+    }
+    .status-dot.missed { background: var(--warn); box-shadow: 0 0 0 5px rgba(247,181,0,.12); }
+    .status-dot.note { background: #8a91a6; box-shadow: 0 0 0 5px rgba(138,145,166,.12); }
+    .empty {
+      padding: 18px;
+      border: 1px dashed rgba(255,255,255,.18);
+      border-radius: 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5,7,11,.78);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 30;
+      backdrop-filter: blur(6px);
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      width: 100%;
+      max-width: 560px;
+      background: linear-gradient(180deg, #171a24, #10131b);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 14px; }
+    .footer-note { margin-top: 16px; color: var(--muted); font-size: 12px; text-align: center; }
+    .hidden { display: none !important; }
+    @media (max-width: 640px) {
+      h1 { font-size: 26px; }
+      .grid.two { grid-template-columns: 1fr; }
+      .hero, .card, .modal { border-radius: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <span class="badge">Karate Tracker Template</span>
+      <h1 id="heroName">Student Tracker</h1>
+      <p class="sub" id="heroSub">Set up the app once, then track attendance and belt progress right from your phone.</p>
+      <div class="row" style="margin-top:16px;">
+        <button class="primary" id="setupBtn">First-Time Setup</button>
+        <button class="secondary" id="editBtn">Edit Student</button>
+        <button class="danger" id="resetBtn">Reset App</button>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="card">
+        <div class="label">Current belt</div>
+        <div style="margin-top:10px;" id="beltWrap"></div>
+        <div class="footer-note" style="text-align:left; margin-top:14px;">Belt color and progress are fully editable.</div>
+      </div>
+      <div class="card">
+        <div class="label">Classes attended</div>
+        <div class="kpi" id="classesAttended">0</div>
+        <div class="label" id="classesSummary">0 classes logged so far</div>
+      </div>
+    </section>
+
+    <section class="card progress-wrap">
+      <div class="row between">
+        <div>
+          <div class="section-title">Progress to next belt</div>
+          <div class="muted" id="progressText">0 of 10 classes completed</div>
+        </div>
+        <div class="belt-pill" id="remainingPill">10 left</div>
+      </div>
+      <div class="progress-bar" style="margin-top:14px;">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row between">
+        <div>
+          <div class="section-title">Quick log</div>
+          <div class="muted">Add today’s result with one tap.</div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <button class="success" id="attendedBtn">Mark Attended</button>
+        <button class="warn" id="missedBtn">Mark Missed</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row between">
+        <div>
+          <div class="section-title">Recent activity</div>
+          <div class="muted">Most recent entries are shown first.</div>
+        </div>
+      </div>
+      <div id="attendanceList" class="attendance-list"></div>
+    </section>
+  </div>
+
+  <div class="overlay" id="setupOverlay">
+    <div class="modal">
+      <div class="row between">
+        <div>
+          <div class="section-title" id="setupTitle">First-Time Setup</div>
+          <div class="muted">Enter starting info so this app is ready to use.</div>
+        </div>
+        <button class="secondary" id="closeSetup">Close</button>
+      </div>
+
+      <div class="stack" style="margin-top:18px;">
+        <label>
+          Student name
+          <input id="studentNameInput" type="text" maxlength="40" placeholder="Add your child’s name">
+        </label>
+        <label>
+          Current belt color
+          <select id="beltInput"></select>
+        </label>
+        <label>
+          Total classes attended so far
+          <input id="startingAttendanceInput" type="number" min="0" max="999" inputmode="numeric" placeholder="0">
+        </label>
+        <label>
+          Classes completed toward next belt
+          <input id="currentCycleInput" type="number" min="0" max="999" inputmode="numeric" placeholder="0">
+        </label>
+        <label>
+          Classes needed for the next belt
+          <input id="targetInput" type="number" min="1" max="999" inputmode="numeric" placeholder="10">
+        </label>
+      </div>
+
+      <div class="row" style="margin-top:18px;">
+        <button class="primary" id="saveSetup">Save Setup</button>
+      </div>
+      <div class="footer-note">Everything is stored locally on this phone. No account needed.</div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'karateTrackerTemplate.v1';
+    const BELTS = [
+      { name: 'White Belt', color: '#f5f5f5', text: '#111' },
+      { name: 'Yellow Belt', color: '#f6d94e', text: '#111' },
+      { name: 'Orange Belt', color: '#f59e0b', text: '#111' },
+      { name: 'Green Belt', color: '#22c55e', text: '#062b13' },
+      { name: 'Blue Belt', color: '#3b82f6', text: '#fff' },
+      { name: 'Purple Belt', color: '#8b5cf6', text: '#fff' },
+      { name: 'Red Belt', color: '#ef4444', text: '#fff' },
+      { name: 'Brown Belt', color: '#8b5a2b', text: '#fff' },
+      { name: 'Black Belt', color: '#111111', text: '#fff' }
+    ];
+
+    const defaultState = {
+      studentName: '',
+      beltName: 'White Belt',
+      totalAttendance: 0,
+      classesTowardNextBelt: 0,
+      classesNeededForNextBelt: 10,
+      activity: []
+    };
+
+    const qs = (id) => document.getElementById(id);
+    const heroName = qs('heroName');
+    const heroSub = qs('heroSub');
+    const beltWrap = qs('beltWrap');
+    const classesAttended = qs('classesAttended');
+    const classesSummary = qs('classesSummary');
+    const progressText = qs('progressText');
+    const remainingPill = qs('remainingPill');
+    const progressFill = qs('progressFill');
+    const attendanceList = qs('attendanceList');
+    const setupOverlay = qs('setupOverlay');
+    const beltInput = qs('beltInput');
+
+    BELTS.forEach(belt => {
+      const option = document.createElement('option');
+      option.value = belt.name;
+      option.textContent = belt.name;
+      beltInput.appendChild(option);
+    });
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return { ...defaultState };
+        return { ...defaultState, ...JSON.parse(raw) };
+      } catch {
+        return { ...defaultState };
+      }
+    }
+
+    let state = loadState();
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      render();
+    }
+
+    function beltMeta(name) {
+      return BELTS.find(b => b.name === name) || BELTS[0];
+    }
+
+    function openSetup(editMode = false) {
+      qs('setupTitle').textContent = editMode ? 'Edit Student' : 'First-Time Setup';
+      qs('studentNameInput').value = state.studentName;
+      qs('beltInput').value = state.beltName;
+      qs('startingAttendanceInput').value = state.totalAttendance;
+      qs('currentCycleInput').value = state.classesTowardNextBelt;
+      qs('targetInput').value = state.classesNeededForNextBelt;
+      setupOverlay.classList.add('show');
+    }
+
+    function closeSetup() {
+      setupOverlay.classList.remove('show');
+    }
+
+    function renderBelt() {
+      const belt = beltMeta(state.beltName);
+      beltWrap.innerHTML = `
+        <div class="belt-pill" style="background:${belt.color}; color:${belt.text}; border-color:rgba(255,255,255,.18);">
+          <span class="swatch" style="background:${belt.color}; border-color:${belt.text === '#111' ? 'rgba(17,17,17,.45)' : 'rgba(255,255,255,.8)'}"></span>
+          ${belt.name}
+        </div>
+      `;
+    }
+
+    function renderActivity() {
+      if (!state.activity.length) {
+        attendanceList.innerHTML = '<div class="empty">No entries yet. Use <strong>Mark Attended</strong> or <strong>Mark Missed</strong> to start tracking.</div>';
+        return;
+      }
+
+      attendanceList.innerHTML = '';
+      [...state.activity].slice(0, 20).forEach(item => {
+        const wrap = document.createElement('div');
+        wrap.className = 'attendance-item';
+        const statusClass = item.type === 'missed' ? 'missed' : item.type === 'note' ? 'note' : '';
+        const statusText = item.type === 'missed' ? 'Missed' : item.type === 'attended' ? 'Attended' : 'Note';
+        wrap.innerHTML = `
+          <span class="status-dot ${statusClass}"></span>
+          <div>
+            <div style="font-weight:700;">${statusText}</div>
+            <div class="muted" style="font-size:13px;">${item.date}</div>
+          </div>
+          <button class="secondary" data-id="${item.id}">Delete</button>
+        `;
+        attendanceList.appendChild(wrap);
+      });
+
+      attendanceList.querySelectorAll('button[data-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.id);
+          const entry = state.activity.find(x => x.id === id);
+          if (!entry) return;
+          if (entry.type === 'attended') {
+            state.totalAttendance = Math.max(0, state.totalAttendance - 1);
+            state.classesTowardNextBelt = Math.max(0, state.classesTowardNextBelt - 1);
+          }
+          state.activity = state.activity.filter(x => x.id !== id);
+          saveState();
+        });
+      });
+    }
+
+    function render() {
+      const displayName = state.studentName || 'Student Tracker';
+      heroName.textContent = displayName;
+      heroSub.textContent = state.studentName
+        ? `Tracking ${state.studentName}'s attendance and belt progress on this device.`
+        : 'Tap First-Time Setup to turn this into a clean tracker for any student.';
+
+      renderBelt();
+
+      classesAttended.textContent = state.totalAttendance;
+      classesSummary.textContent = `${state.activity.filter(x => x.type === 'attended').length} attended entries logged in this app`;
+
+      const needed = Math.max(1, Number(state.classesNeededForNextBelt) || 1);
+      const current = Math.max(0, Number(state.classesTowardNextBelt) || 0);
+      const cappedCurrent = Math.min(current, needed);
+      const remaining = Math.max(0, needed - cappedCurrent);
+      const percent = Math.min(100, Math.round((cappedCurrent / needed) * 100));
+
+      progressText.textContent = `${cappedCurrent} of ${needed} classes completed`;
+      remainingPill.textContent = remaining === 0 ? 'Ready to test' : `${remaining} left`;
+      progressFill.style.width = `${percent}%`;
+
+      renderActivity();
+    }
+
+    function addEntry(type) {
+      const now = new Date();
+      const formatted = now.toLocaleDateString(undefined, {
+        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+      });
+
+      if (type === 'attended') {
+        state.totalAttendance += 1;
+        state.classesTowardNextBelt += 1;
+      }
+
+      state.activity.unshift({
+        id: Date.now(),
+        type,
+        date: formatted
+      });
+
+      saveState();
+    }
+
+    qs('setupBtn').addEventListener('click', () => openSetup(false));
+    qs('editBtn').addEventListener('click', () => openSetup(true));
+    qs('closeSetup').addEventListener('click', closeSetup);
+    qs('attendedBtn').addEventListener('click', () => addEntry('attended'));
+    qs('missedBtn').addEventListener('click', () => addEntry('missed'));
+
+    qs('saveSetup').addEventListener('click', () => {
+      const studentName = qs('studentNameInput').value.trim();
+      const beltName = qs('beltInput').value;
+      const totalAttendance = Math.max(0, parseInt(qs('startingAttendanceInput').value || '0', 10));
+      const classesTowardNextBelt = Math.max(0, parseInt(qs('currentCycleInput').value || '0', 10));
+      const classesNeededForNextBelt = Math.max(1, parseInt(qs('targetInput').value || '10', 10));
+
+      state.studentName = studentName;
+      state.beltName = beltName;
+      state.totalAttendance = totalAttendance;
+      state.classesTowardNextBelt = Math.min(classesTowardNextBelt, classesNeededForNextBelt);
+      state.classesNeededForNextBelt = classesNeededForNextBelt;
+      saveState();
+      closeSetup();
+    });
+
+    qs('resetBtn').addEventListener('click', () => {
+      const confirmed = confirm('Reset the app and remove all student data from this device?');
+      if (!confirmed) return;
+      localStorage.removeItem(STORAGE_KEY);
+      state = { ...defaultState };
+      saveState();
+      openSetup(false);
+    });
+
+    setupOverlay.addEventListener('click', (event) => {
+      if (event.target === setupOverlay) closeSetup();
+    });
+
+    render();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    if (!state.studentName) {
+      setTimeout(() => openSetup(false), 300);
+    }
+  </script>
+</body>
+</html>
