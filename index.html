@@ -181,6 +181,16 @@
       .grid.two { grid-template-columns: 1fr; }
       .hero, .card, .modal { border-radius: 24px; }
     }
+    .stripe-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .stripe-label { color: var(--muted); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .stripe-status { font-size: 13px; font-weight: 700; }
+    .stripe-dots { display: flex; gap: 8px; margin-bottom: 10px; }
+    .stripe-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,.15); background: transparent; transition: background .2s, border-color .2s; }
+    .stripe-dot.earned { background: linear-gradient(135deg,#991b1b,#ef4444); border-color: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,.4); }
+    .stripe-meta { color: var(--muted); font-size: 13px; }
+    .stripe-meta strong { color: var(--text); }
+    .stripe-btn { background: linear-gradient(135deg,#991b1b,#ef4444); color: #fff; border-color: transparent; font-weight: 700; }
+    .stripe-btn:disabled { opacity: .4; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -236,6 +246,10 @@
     </section>
 
     <section class="card">
+      <div id="stripeSection"></div>
+    </section>
+
+    <section class="card">
       <div class="row between">
         <div>
           <div class="section-title">Recent activity</div>
@@ -288,16 +302,23 @@
 
   <script>
     const STORAGE_KEY = 'karateTrackerTemplate.v1';
+    const STRIPE_REQUIRED = 8;
+    const MAX_STRIPES = 3;
+
     const BELTS = [
-      { name: 'White Belt', color: '#f5f5f5', text: '#111' },
-      { name: 'Yellow Belt', color: '#f6d94e', text: '#111' },
-      { name: 'Orange Belt', color: '#f59e0b', text: '#111' },
-      { name: 'Green Belt', color: '#22c55e', text: '#062b13' },
-      { name: 'Blue Belt', color: '#3b82f6', text: '#fff' },
-      { name: 'Purple Belt', color: '#8b5cf6', text: '#fff' },
-      { name: 'Red Belt', color: '#ef4444', text: '#fff' },
-      { name: 'Brown Belt', color: '#8b5a2b', text: '#fff' },
-      { name: 'Black Belt', color: '#111111', text: '#fff' }
+      { name: 'White Belt',           color: '#f5f5f5', text: '#111' },
+      { name: 'Yellow Belt',          color: '#f6d94e', text: '#111' },
+      { name: 'Orange Belt',          color: '#f59e0b', text: '#111' },
+      { name: 'Blue Belt',            color: '#3b82f6', text: '#fff' },
+      { name: 'Green Belt',           color: '#22c55e', text: '#062b13' },
+      { name: 'Advanced Green Belt',  color: 'linear-gradient(to bottom,#22c55e 0%,#22c55e 42%,#8b5cf6 42%,#8b5cf6 58%,#22c55e 58%,#22c55e 100%)', text: '#062b13' },
+      { name: 'Purple Belt',          color: '#8b5cf6', text: '#fff' },
+      { name: 'Advanced Purple Belt', color: 'linear-gradient(to bottom,#8b5cf6 0%,#8b5cf6 42%,#8b5a2b 42%,#8b5a2b 58%,#8b5cf6 58%,#8b5cf6 100%)', text: '#fff' },
+      { name: 'Brown Belt',           color: '#8b5a2b', text: '#fff' },
+      { name: 'Advanced Brown Belt',  color: 'linear-gradient(to bottom,#8b5a2b 0%,#8b5a2b 42%,#ef4444 42%,#ef4444 58%,#8b5a2b 58%,#8b5a2b 100%)', text: '#fff' },
+      { name: 'Red Belt',             color: '#ef4444', text: '#fff' },
+      { name: 'Advanced Red Belt',    color: 'linear-gradient(to bottom,#ef4444 0%,#ef4444 42%,#111111 42%,#111111 58%,#ef4444 58%,#ef4444 100%)', text: '#fff' },
+      { name: 'Black Belt',           color: '#111111', text: '#fff' }
     ];
 
     const defaultState = {
@@ -306,6 +327,8 @@
       totalAttendance: 0,
       classesTowardNextBelt: 0,
       classesNeededForNextBelt: 10,
+      currentStripe: 0,
+      classesSinceStripe: 0,
       activity: []
     };
 
@@ -435,11 +458,49 @@
       progressFill.style.width = `${percent}%`;
 
       renderActivity();
+      renderStripe();
+    }
+
+    function renderStripe() {
+      const stripeMaxed = state.currentStripe >= MAX_STRIPES;
+      const stripeRem = stripeMaxed ? 0 : Math.max(STRIPE_REQUIRED - state.classesSinceStripe, 0);
+      const stripeEligible = !stripeMaxed && stripeRem === 0;
+      const statusText = stripeMaxed ? 'All stripes earned' : stripeEligible ? 'Eligible to test' : `${stripeRem} more needed`;
+      const statusColor = stripeMaxed ? '#1ec27a' : stripeEligible ? '#f7b500' : '#8a91a6';
+
+      const dots = Array.from({length: MAX_STRIPES}, (_, i) =>
+        `<div class="stripe-dot${i < state.currentStripe ? ' earned' : ''}"></div>`
+      ).join('');
+
+      qs('stripeSection').innerHTML = `
+        <div class="stripe-header">
+          <div class="stripe-label">Stripe Progress</div>
+          <div class="stripe-status" style="color:${statusColor}">${statusText}</div>
+        </div>
+        <div class="stripe-dots">${dots}</div>
+        <div class="stripe-meta">
+          <strong>${Math.min(state.classesSinceStripe, STRIPE_REQUIRED)}</strong> / ${STRIPE_REQUIRED} classes toward next stripe
+        </div>
+        <div style="margin-top:10px;">
+          <button class="stripe-btn" id="stripeBtn" ${stripeMaxed ? "disabled" : ""}>+ Award Stripe</button>
+        </div>
+      `;
+
+      const btn = qs('stripeBtn');
+      if (btn && !stripeMaxed) {
+        btn.addEventListener('click', awardStripe);
+      }
+    }
+
+    function awardStripe() {
+      if (state.currentStripe >= MAX_STRIPES) return;
+      state.currentStripe += 1;
+      state.classesSinceStripe = 0;
+      saveState();
     }
 
     function addEntry(type) {
       // FIX: Use local date components to avoid UTC timezone drift.
-      // Without this, dates can shift to the next day for US timezones in the evening.
       const n = new Date();
       const now = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12);
       const formatted = now.toLocaleDateString(undefined, {
@@ -449,6 +510,7 @@
       if (type === 'attended') {
         state.totalAttendance += 1;
         state.classesTowardNextBelt += 1;
+        state.classesSinceStripe = (state.classesSinceStripe || 0) + 1;
       }
 
       state.activity.unshift({
