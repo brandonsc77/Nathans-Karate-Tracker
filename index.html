@@ -226,7 +226,7 @@
       <div class="row between">
         <div>
           <div class="section-title">Quick log</div>
-          <div class="muted">Add today’s result with one tap.</div>
+          <div class="muted">Add today's result with one tap.</div>
         </div>
       </div>
       <div class="row" style="margin-top:14px;">
@@ -259,7 +259,7 @@
       <div class="stack" style="margin-top:18px;">
         <label>
           Student name
-          <input id="studentNameInput" type="text" maxlength="40" placeholder="Add your child’s name">
+          <input id="studentNameInput" type="text" maxlength="40" placeholder="Add your child's name">
         </label>
         <label>
           Current belt color
@@ -438,7 +438,10 @@
     }
 
     function addEntry(type) {
-      const now = new Date();
+      // FIX: Use local date components to avoid UTC timezone drift.
+      // Without this, dates can shift to the next day for US timezones in the evening.
+      const n = new Date();
+      const now = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12);
       const formatted = now.toLocaleDateString(undefined, {
         weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
       });
