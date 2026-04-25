@@ -145,6 +145,7 @@
     }
     .status-dot.missed { background: var(--warn); box-shadow: 0 0 0 5px rgba(247,181,0,.12); }
     .status-dot.note { background: #8a91a6; box-shadow: 0 0 0 5px rgba(138,145,166,.12); }
+    .status-dot.promoted { background: #a78bfa; box-shadow: 0 0 0 5px rgba(167,139,250,.15); }
     .empty {
       padding: 18px;
       border: 1px dashed rgba(255,255,255,.18);
@@ -191,6 +192,19 @@
     .stripe-meta strong { color: var(--text); }
     .stripe-btn { background: linear-gradient(135deg,#991b1b,#ef4444); color: #fff; border-color: transparent; font-weight: 700; }
     .stripe-btn:disabled { opacity: .4; cursor: not-allowed; }
+    /* Promote button */
+    .promote-btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1a6b3a, #1ec27a);
+      border-color: transparent;
+      color: #fff;
+      border-radius: 18px;
+      letter-spacing: .01em;
+    }
   </style>
 </head>
 <body>
@@ -230,6 +244,14 @@
       <div class="progress-bar" style="margin-top:14px;">
         <div class="progress-fill" id="progressFill"></div>
       </div>
+      <!-- Promote button — hidden until ready -->
+      <div id="promoteWrap" style="display:none;">
+        <button class="promote-btn" id="promoteBtn">🥋 Promote to Next Belt</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div id="stripeSection"></div>
     </section>
 
     <section class="card">
@@ -243,10 +265,6 @@
         <button class="success" id="attendedBtn">Mark Attended</button>
         <button class="warn" id="missedBtn">Mark Missed</button>
       </div>
-    </section>
-
-    <section class="card">
-      <div id="stripeSection"></div>
     </section>
 
     <section class="card">
@@ -344,6 +362,8 @@
     const attendanceList = qs('attendanceList');
     const setupOverlay = qs('setupOverlay');
     const beltInput = qs('beltInput');
+    const promoteWrap = qs('promoteWrap');
+    const promoteBtn = qs('promoteBtn');
 
     BELTS.forEach(belt => {
       const option = document.createElement('option');
@@ -407,15 +427,24 @@
       [...state.activity].slice(0, 20).forEach(item => {
         const wrap = document.createElement('div');
         wrap.className = 'attendance-item';
-        const statusClass = item.type === 'missed' ? 'missed' : item.type === 'note' ? 'note' : '';
-        const statusText = item.type === 'missed' ? 'Missed' : item.type === 'attended' ? 'Attended' : 'Note';
+
+        let statusClass = '';
+        let statusText = '';
+        if (item.type === 'missed')    { statusClass = 'missed';   statusText = 'Missed'; }
+        else if (item.type === 'promoted') { statusClass = 'promoted'; statusText = '🥋 Promoted'; }
+        else                           { statusClass = '';         statusText = 'Attended'; }
+
+        const deleteBtn = item.type !== 'promoted'
+          ? `<button class="secondary" data-id="${item.id}">Delete</button>`
+          : `<span></span>`;
+
         wrap.innerHTML = `
           <span class="status-dot ${statusClass}"></span>
           <div>
-            <div style="font-weight:700;">${statusText}</div>
+            <div style="font-weight:700;">${statusText}${item.belt ? ' — ' + item.belt : ''}</div>
             <div class="muted" style="font-size:13px;">${item.date}</div>
           </div>
-          <button class="secondary" data-id="${item.id}">Delete</button>
+          ${deleteBtn}
         `;
         attendanceList.appendChild(wrap);
       });
@@ -454,8 +483,13 @@
       const percent = Math.min(100, Math.round((cappedCurrent / needed) * 100));
 
       progressText.textContent = `${cappedCurrent} of ${needed} classes completed`;
-      remainingPill.textContent = remaining === 0 ? 'Ready to test' : `${remaining} left`;
+      remainingPill.textContent = remaining === 0 ? 'Ready to test!' : `${remaining} left`;
       progressFill.style.width = `${percent}%`;
+
+      // Show promote button only when bar is full AND a next belt exists
+      const currentBeltIndex = BELTS.findIndex(b => b.name === state.beltName);
+      const hasNextBelt = currentBeltIndex >= 0 && currentBeltIndex < BELTS.length - 1;
+      promoteWrap.style.display = (remaining === 0 && hasNextBelt) ? 'block' : 'none';
 
       renderActivity();
       renderStripe();
@@ -499,8 +533,39 @@
       saveState();
     }
 
+    // ---- PROMOTE LOGIC ----
+    promoteBtn.addEventListener('click', () => {
+      const currentBeltIndex = BELTS.findIndex(b => b.name === state.beltName);
+      if (currentBeltIndex < 0 || currentBeltIndex >= BELTS.length - 1) return;
+
+      const oldBelt = state.beltName;
+      const newBelt = BELTS[currentBeltIndex + 1].name;
+
+      const confirmed = confirm(`Promote from ${oldBelt} to ${newBelt}?\n\nThis will reset the belt progress counter and stripe count.`);
+      if (!confirmed) return;
+
+      state.beltName = newBelt;
+      state.classesTowardNextBelt = 0;
+      state.currentStripe = 0;
+      state.classesSinceStripe = 0;
+
+      // Log the promotion in the activity feed
+      const n = new Date();
+      const now = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12);
+      const formatted = now.toLocaleDateString(undefined, {
+        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+      });
+      state.activity.unshift({
+        id: Date.now(),
+        type: 'promoted',
+        belt: newBelt,
+        date: formatted
+      });
+
+      saveState();
+    });
+
     function addEntry(type) {
-      // FIX: Use local date components to avoid UTC timezone drift.
       const n = new Date();
       const now = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12);
       const formatted = now.toLocaleDateString(undefined, {
